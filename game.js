@@ -168,6 +168,8 @@ function spawnTile() {
     return false;
   }
 
+  touchActive = false;
+
   activeTile = {
     row: spawnRow,
     col: spawnCol,
@@ -232,6 +234,7 @@ function lockTile() {
 
   board[activeTile.row][activeTile.col] = { letter: activeTile.letter };
   activeTile = null;
+  touchActive = false;
   render();
   resolveBoard();
 }
