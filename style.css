@@ -1,0 +1,235 @@
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100%;
+  font-family: Arial, sans-serif;
+  touch-action: manipulation;
+}
+
+body {
+  background: linear-gradient(180deg, #0b1020 0%, #16213a 45%, #0b1020 100%);
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  padding: 20px 12px;
+}
+
+.game-container {
+  width: 100%;
+  max-width: 520px;
+  text-align: center;
+}
+
+h1 {
+  margin: 0 0 14px;
+  font-size: clamp(2rem, 7vw, 3.2rem);
+  font-weight: 900;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #dfefff;
+  text-shadow:
+    0 2px 0 #8cb8e8,
+    0 4px 8px rgba(0, 0, 0, 0.55);
+}
+
+.top-bar {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.stat-box {
+  flex: 1;
+  min-width: 0;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 14px;
+  padding: 10px 8px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+}
+
+.label {
+  display: block;
+  font-size: 0.75rem;
+  opacity: 0.85;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+#score, #level, #speed {
+  display: block;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.message {
+  min-height: 24px;
+  margin: 6px 0 14px;
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: #d7ebff;
+}
+
+.board {
+  width: 100%;
+  aspect-ratio: 9 / 12;
+  display: grid;
+  gap: 4px;
+  padding: 8px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03)),
+    rgba(5, 10, 20, 0.75);
+  border: 2px solid rgba(173, 216, 255, 0.2);
+  border-radius: 18px;
+  box-shadow:
+    inset 0 0 18px rgba(255,255,255,0.05),
+    0 14px 30px rgba(0,0,0,0.35);
+  margin: 0 auto 16px;
+  user-select: none;
+}
+
+.cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.045);
+  border: 1px solid rgba(255,255,255,0.06);
+  font-weight: 900;
+  font-size: clamp(1rem, 3.3vw, 1.7rem);
+  color: #ffffff;
+  text-shadow: 0 1px 0 rgba(0,0,0,0.6);
+}
+
+.grey-tile {
+  background: linear-gradient(145deg, #f1f1f1 0%, #cfcfcf 32%, #9f9f9f 68%, #ececec 100%);
+  border: 1px solid #7d7d7d;
+  color: #202020;
+  box-shadow:
+    inset 0 1px 1px rgba(255,255,255,0.85),
+    inset 0 -2px 4px rgba(0,0,0,0.18),
+    0 2px 4px rgba(0,0,0,0.25);
+  text-shadow: 0 1px 0 rgba(255,255,255,0.5);
+}
+
+.filled {
+  transform: scale(1);
+}
+
+.active {
+  background: linear-gradient(145deg, #ffffff 0%, #dadada 30%, #a8a8a8 70%, #f7f7f7 100%);
+  border: 1px solid #6d6d6d;
+  box-shadow:
+    inset 0 1px 1px rgba(255,255,255,0.95),
+    inset 0 -2px 4px rgba(0,0,0,0.18),
+    0 0 10px rgba(180, 220, 255, 0.7),
+    0 2px 5px rgba(0,0,0,0.28);
+}
+
+.controls-row {
+  margin-bottom: 12px;
+}
+
+.main-btn {
+  appearance: none;
+  border: none;
+  border-radius: 16px;
+  padding: 14px 26px;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: white;
+  background: linear-gradient(180deg, #2f8fff 0%, #1558c8 100%);
+  box-shadow:
+    inset 0 1px 1px rgba(255,255,255,0.35),
+    0 6px 14px rgba(0,0,0,0.28);
+  cursor: pointer;
+}
+
+.main-btn:active {
+  transform: translateY(1px);
+}
+
+.mobile-controls {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.control-btn {
+  appearance: none;
+  border: none;
+  border-radius: 14px;
+  padding: 14px 10px;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: white;
+  background: linear-gradient(180deg, #445b86 0%, #24334f 100%);
+  box-shadow:
+    inset 0 1px 1px rgba(255,255,255,0.2),
+    0 5px 12px rgba(0,0,0,0.25);
+  cursor: pointer;
+}
+
+.control-btn:active {
+  transform: translateY(1px);
+}
+
+.help-text {
+  font-size: 0.9rem;
+  opacity: 0.85;
+}
+
+.help-text p {
+  margin: 0;
+}
+
+@media (max-width: 520px) {
+  body {
+    padding: 12px 8px 20px;
+  }
+
+  .top-bar {
+    gap: 6px;
+  }
+
+  .stat-box {
+    padding: 8px 6px;
+    border-radius: 12px;
+  }
+
+  #score, #level, #speed {
+    font-size: 1.05rem;
+  }
+
+  .message {
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+  }
+
+  .board {
+    gap: 3px;
+    padding: 6px;
+    border-radius: 14px;
+  }
+
+  .cell {
+    border-radius: 8px;
+  }
+
+  .main-btn,
+  .control-btn {
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+}

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Word Drop</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="game-container">
+    <h1>WORD DROP</h1>
+
+    <div class="top-bar">
+      <div class="stat-box">
+        <span class="label">Score</span>
+        <span id="score">0</span>
+      </div>
+
+      <div class="stat-box">
+        <span class="label">Level</span>
+        <span id="level">1</span>
+      </div>
+
+      <div class="stat-box">
+        <span class="label">Speed</span>
+        <span id="speed">0.8s</span>
+      </div>
+    </div>
+
+    <div id="message" class="message">Press Start</div>
+
+    <div id="board" class="board"></div>
+
+    <div class="controls-row">
+      <button id="startBtn" class="main-btn">Start Game</button>
+    </div>
+
+    <div class="mobile-controls">
+      <button id="leftBtn" class="control-btn">←</button>
+      <button id="downBtn" class="control-btn">↓</button>
+      <button id="rightBtn" class="control-btn">→</button>
+      <button id="dropBtn" class="control-btn">Drop</button>
+    </div>
+
+    <div class="help-text">
+      <p>Keyboard: Left / Right / Down / Space</p>
+    </div>
+  </div>
+
+  <script src="dictionary.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
