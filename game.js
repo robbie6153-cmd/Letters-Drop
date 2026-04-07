@@ -80,7 +80,16 @@ function wordPoints(len) {
   if (len >= 3 && len <= 7) return len - 2;
   return 0;
 }
+function showComboPopup(text, isGold = false) {
+  const popup = document.createElement("div");
+  popup.className = isGold ? "combo-popup gold" : "combo-popup";
+  popup.textContent = text;
+  document.body.appendChild(popup);
 
+  setTimeout(() => {
+    popup.remove();
+  }, 750);
+}
 // -------------------------
 // BOARD
 // -------------------------
@@ -290,24 +299,31 @@ function findAllWords() {
 // -------------------------
 // FLASH
 // -------------------------
-function flashCells(words) {
-  const flashed = new Set();
-
+function flashCells(words, multiplier = 1) {
   for (const item of words) {
-    for (const cell of item.cells) {
-      const key = `${cell.row},${cell.col}`;
-      if (flashed.has(key)) continue;
-      flashed.add(key);
+    const isSeven = item.word.length === 7;
 
-      const el = document.getElementById(`cell-${cell.row}-${cell.col}`);
-      if (el) el.classList.add("flash");
+    for (const cell of item.cells) {
+      const index = cell.row * COLS + cell.col;
+      const el = boardEl.children[index];
+      if (!el) continue;
+
+      el.classList.add("flash-green");
+
+      if (multiplier >= 2) {
+        el.classList.add("flash-combo");
+      }
+
+      if (isSeven) {
+        el.classList.add("flash-gold");
+      }
     }
   }
 }
 
 function clearFlashCells() {
-  document.querySelectorAll(".cell.flash").forEach(el => {
-    el.classList.remove("flash");
+  [...boardEl.children].forEach(el => {
+    el.classList.remove("flash-green", "flash-combo", "flash-gold");
   });
 }
 
@@ -355,16 +371,22 @@ async function resolveBoard() {
     const gained = basePoints * multiplier;
     score += gained;
     scoreEl.textContent = score;
+if (multiplier >= 2) {
+  showComboPopup(`Combo x${multiplier}`);
+}
 
+if (words.some(item => item.word.length === 7)) {
+  showComboPopup("7 LETTER WORD!", true);
+}
     showMessage(
       multiplier > 1
         ? `Words: ${words.map(w => w.word).join(", ")} | Combo x${multiplier} | +${gained}`
         : `Words: ${words.map(w => w.word).join(", ")} | +${gained}`
     );
 
-    flashCells(words);
-    await pause(160);
-    clearFlashCells();
+    flashCells(words, multiplier);
+await pause(220);
+clearFlashCells();
 
     for (const key of cellsToClear) {
       const [r, c] = key.split(",").map(Number);
