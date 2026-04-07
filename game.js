@@ -535,52 +535,82 @@ if (startBtn) {
   startBtn.addEventListener("click", handleStartButton);
 }
 
-
 // -------------------------
 // SWIPE
 // -------------------------
 let touchStartX = 0;
 let touchStartY = 0;
-let touchMoved = false;
+let touchActive = false;
+let lastSwipeCol = null;
+
+function getCellFromTouch(touch) {
+  const boardRect = boardEl.getBoundingClientRect();
+  const cellWidth = boardRect.width / COLS;
+  const cellHeight = boardRect.height / ROWS;
+
+  const x = touch.clientX - boardRect.left;
+  const y = touch.clientY - boardRect.top;
+
+  const col = Math.floor(x / cellWidth);
+  const row = Math.floor(y / cellHeight);
+
+  return { row, col };
+}
 
 boardEl.addEventListener("touchstart", e => {
   if (!gameRunning || !activeTile || resolving) return;
+
   const t = e.changedTouches[0];
+  const touchedCell = getCellFromTouch(t);
+
+  // Only allow swipe if touch starts on the active falling tile
+  if (touchedCell.row !== activeTile.row || touchedCell.col !== activeTile.col) {
+    touchActive = false;
+    return;
+  }
+
   touchStartX = t.clientX;
   touchStartY = t.clientY;
-  touchMoved = false;
+  touchActive = true;
+  lastSwipeCol = activeTile.col;
 }, { passive: true });
 
 boardEl.addEventListener("touchmove", e => {
-  if (!gameRunning || !activeTile || resolving) return;
+  if (!gameRunning || !activeTile || resolving || !touchActive) return;
+
   const t = e.changedTouches[0];
+  const boardRect = boardEl.getBoundingClientRect();
+  const cellWidth = boardRect.width / COLS;
+
   const dx = t.clientX - touchStartX;
-  const dy = t.clientY - touchStartY;
+  const targetCol = Math.round(activeTile.col + dx / cellWidth);
 
-  if (touchMoved) return;
-
-  if (Math.abs(dx) > 18 && Math.abs(dx) > Math.abs(dy)) {
-    if (dx > 0) moveRight();
-    else moveLeft();
-    touchMoved = true;
-  } else if (dy > 18 && Math.abs(dy) > Math.abs(dx)) {
-    softDrop();
-    touchStartY = t.clientY; // allows repeated downward swipes
+  // Move horizontally across multiple columns
+  while (activeTile.col < targetCol && canMoveTo(activeTile.row, activeTile.col + 1)) {
+    activeTile.col++;
   }
+  while (activeTile.col > targetCol && canMoveTo(activeTile.row, activeTile.col - 1)) {
+    activeTile.col--;
+  }
+
+  render();
 }, { passive: true });
 
 boardEl.addEventListener("touchend", e => {
-  if (!gameRunning || !activeTile || resolving) return;
+  if (!gameRunning || !activeTile || resolving || !touchActive) return;
 
   const t = e.changedTouches[0];
-  const dx = t.clientX - touchStartX;
   const dy = t.clientY - touchStartY;
+  const dx = t.clientX - touchStartX;
 
-  if (dy > 80 && Math.abs(dy) > Math.abs(dx)) {
+  // Down swipe = hard drop
+  if (dy > 50 && Math.abs(dy) > Math.abs(dx)) {
     hardDrop();
   }
-}, { passive: true });
 
+  touchActive = false;
+  lastSwipeCol = null;
+}, { passive: true });
 // -------------------------
 // INIT
 // -------------------------
