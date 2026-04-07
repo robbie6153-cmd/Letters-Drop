@@ -16,6 +16,10 @@ fetch("https://cdn.jsdelivr.net/npm/an-array-of-english-words/index.json")
     console.log("Has TEN?", dictionary.includes("TEN"));
     console.log("Has BID?", dictionary.includes("BID"));
     console.log("Has HOOD?", dictionary.includes("HOOD"));
+
+    if (typeof onDictionaryReady === "function") {
+      onDictionaryReady();
+    }
   })
   .catch(error => {
     console.error("Error loading dictionary:", error);

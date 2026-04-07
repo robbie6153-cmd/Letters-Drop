@@ -1,9 +1,3 @@
-// WORD DROP / WORD TETRIS
-// 9 columns x 12 rows
-// Swipe left/right/down on phone
-// Valid words clear, flash briefly, then tiles fall
-// Combo scoring on cascades: x2, x3, x4 etc.
-
 const COLS = 9;
 const ROWS = 12;
 
@@ -13,7 +7,7 @@ const SPEED_STEP_MS = 100;
 const MIN_FALL_MS = 150;
 
 const LETTERS =
-  "EEEEEEEEEEAAAAAARRRRRRRRIIIIIIIIOOOOOOONNNNNNTTTTTTLLLLSSSSSUUUUDDDDGGGBBCCMMPPFFHHVVWWYYKJXQZ";
+  "EEEEEEEEEEEEAAAAAAAARRRRRRRRIIIIIIIIOOOOOOONNNNNNTTTTTTLLLLSSSSUUUUDDDDGGGBBCCMMPPFFHHVVWWYYKJXQZ";
 
 let board = [];
 let activeTile = null;
@@ -39,6 +33,17 @@ const downBtn = document.getElementById("downBtn");
 const dropBtn = document.getElementById("dropBtn");
 
 // -------------------------
+// DICTIONARY HOOK
+// -------------------------
+function onDictionaryReady() {
+  if (startBtn) {
+    startBtn.disabled = false;
+    startBtn.textContent = "Start Game";
+  }
+  showMessage("Dictionary loaded. Ready to play.");
+}
+
+// -------------------------
 // DICTIONARY
 // -------------------------
 function loadDictionary() {
@@ -46,9 +51,6 @@ function loadDictionary() {
 
   if (typeof getDictionaryArray === "function") {
     words = getDictionaryArray();
-  } else if (typeof DICTIONARY !== "undefined") {
-    if (Array.isArray(DICTIONARY)) words = DICTIONARY;
-    else if (DICTIONARY instanceof Set) words = [...DICTIONARY];
   }
 
   words = words
@@ -57,7 +59,7 @@ function loadDictionary() {
 
   dict = new Set(words);
 
-  // fallback test words so engine definitely proves itself
+  // fallback safety words
   ["TEN", "HOOD", "BID", "DOG", "CAT", "WORD", "BED", "BAD", "GOOD"].forEach(w => {
     dict.add(w);
   });
@@ -201,11 +203,9 @@ function softDrop() {
 
 function hardDrop() {
   if (!gameRunning || !activeTile || resolving) return;
-
   while (canMoveTo(activeTile.row + 1, activeTile.col)) {
     activeTile.row++;
   }
-
   lockTile();
 }
 
@@ -255,55 +255,32 @@ function findWordsInCells(cells) {
 function findAllWords() {
   let allWords = [];
 
-  // horizontal
   for (let r = 0; r < ROWS; r++) {
     let segment = [];
-
     for (let c = 0; c < COLS; c++) {
       if (board[r][c]) {
-        segment.push({
-          row: r,
-          col: c,
-          letter: board[r][c].letter
-        });
+        segment.push({ row: r, col: c, letter: board[r][c].letter });
       } else {
-        if (segment.length >= 3) {
-          allWords.push(...findWordsInCells(segment));
-        }
+        if (segment.length >= 3) allWords.push(...findWordsInCells(segment));
         segment = [];
       }
     }
-
-    if (segment.length >= 3) {
-      allWords.push(...findWordsInCells(segment));
-    }
+    if (segment.length >= 3) allWords.push(...findWordsInCells(segment));
   }
 
-  // vertical
   for (let c = 0; c < COLS; c++) {
     let segment = [];
-
     for (let r = 0; r < ROWS; r++) {
       if (board[r][c]) {
-        segment.push({
-          row: r,
-          col: c,
-          letter: board[r][c].letter
-        });
+        segment.push({ row: r, col: c, letter: board[r][c].letter });
       } else {
-        if (segment.length >= 3) {
-          allWords.push(...findWordsInCells(segment));
-        }
+        if (segment.length >= 3) allWords.push(...findWordsInCells(segment));
         segment = [];
       }
     }
-
-    if (segment.length >= 3) {
-      allWords.push(...findWordsInCells(segment));
-    }
+    if (segment.length >= 3) allWords.push(...findWordsInCells(segment));
   }
 
-  // remove exact duplicates
   const seen = new Set();
   return allWords.filter(item => {
     const key = item.word + "|" + item.cells.map(c => `${c.row},${c.col}`).join(";");
@@ -314,7 +291,7 @@ function findAllWords() {
 }
 
 // -------------------------
-// FLASH VALID WORD CELLS
+// FLASH
 // -------------------------
 function flashCells(words) {
   const flashed = new Set();
@@ -332,8 +309,9 @@ function flashCells(words) {
 }
 
 function clearFlashCells() {
-  const els = document.querySelectorAll(".cell.flash");
-  els.forEach(el => el.classList.remove("flash"));
+  document.querySelectorAll(".cell.flash").forEach(el => {
+    el.classList.remove("flash");
+  });
 }
 
 // -------------------------
@@ -356,7 +334,7 @@ function applyGravity() {
 }
 
 // -------------------------
-// RESOLVE WORDS / COMBOS
+// RESOLVE
 // -------------------------
 async function resolveBoard() {
   resolving = true;
@@ -366,10 +344,8 @@ async function resolveBoard() {
     const words = findAllWords();
     if (!words.length) break;
 
-    console.log("Words found:", words.map(w => w.word));
-
-    let basePoints = 0;
     const cellsToClear = new Set();
+    let basePoints = 0;
 
     for (const item of words) {
       basePoints += wordPoints(item.word.length);
@@ -390,7 +366,7 @@ async function resolveBoard() {
     );
 
     flashCells(words);
-    await pause(140);
+    await pause(160);
     clearFlashCells();
 
     for (const key of cellsToClear) {
@@ -399,7 +375,7 @@ async function resolveBoard() {
     }
 
     render();
-    await pause(120);
+    await pause(100);
 
     applyGravity();
     render();
@@ -417,8 +393,60 @@ async function resolveBoard() {
 }
 
 // -------------------------
-// TIMER / GAME FLOW
+// GAME FLOW
 // -------------------------
+function resetGameState() {
+  clearInterval(fallTimer);
+  clearInterval(speedTimer);
+
+  board = createEmptyBoard();
+  activeTile = null;
+  score = 0;
+  level = 1;
+  fallInterval = START_FALL_MS;
+  resolving = false;
+
+  initBoardUI();
+  render();
+
+  scoreEl.textContent = score;
+  levelEl.textContent = level;
+  speedEl.textContent = `${(fallInterval / 1000).toFixed(1)}s`;
+}
+
+function startNewGame() {
+  loadDictionary();
+  resetGameState();
+  gameRunning = true;
+  showMessage("Game started");
+  spawnTile();
+  render();
+  startFallLoop();
+  startSpeedLoop();
+
+  if (startBtn) {
+    startBtn.textContent = "Restart Game";
+    startBtn.disabled = false;
+  }
+}
+
+function handleStartButton() {
+  if (typeof isDictionaryLoaded === "function" && !isDictionaryLoaded()) {
+    showMessage("Dictionary still loading...");
+    return;
+  }
+
+  if (!gameRunning) {
+    startNewGame();
+    return;
+  }
+
+  const restart = confirm("Restart current game?");
+  if (restart) {
+    startNewGame();
+  }
+}
+
 function startFallLoop() {
   clearInterval(fallTimer);
   fallTimer = setInterval(() => {
@@ -436,39 +464,6 @@ function startSpeedLoop() {
   }, SPEED_UP_EVERY_MS);
 }
 
-function startGame() {
-  clearInterval(fallTimer);
-  clearInterval(speedTimer);
-
-  if (typeof isDictionaryLoaded === "function" && !isDictionaryLoaded()) {
-    showMessage("Dictionary still loading...");
-    return;
-  }
-
-  loadDictionary();
-
-  board = createEmptyBoard();
-  activeTile = null;
-  score = 0;
-  level = 1;
-  fallInterval = START_FALL_MS;
-  resolving = false;
-  gameRunning = true;
-
-  initBoardUI();
-  scoreEl.textContent = score;
-  levelEl.textContent = level;
-  speedEl.textContent = `${(fallInterval / 1000).toFixed(1)}s`;
-
-  showMessage("Game started");
-
-  spawnTile();
-  render();
-
-  startFallLoop();
-  startSpeedLoop();
-}
-
 function endGame() {
   gameRunning = false;
   clearInterval(fallTimer);
@@ -476,10 +471,15 @@ function endGame() {
   activeTile = null;
   render();
   showMessage(`Game Over! Final score: ${score}`);
+
+  if (startBtn) {
+    startBtn.textContent = "Start Game";
+    startBtn.disabled = false;
+  }
 }
 
 // -------------------------
-// KEYBOARD CONTROLS
+// INPUTS
 // -------------------------
 document.addEventListener("keydown", e => {
   if (!gameRunning) return;
@@ -499,80 +499,65 @@ document.addEventListener("keydown", e => {
   }
 });
 
-// -------------------------
-// BUTTON CONTROLS
-// -------------------------
-if (startBtn) startBtn.addEventListener("click", startGame);
+if (startBtn) {
+  startBtn.disabled = true;
+  startBtn.textContent = "Loading...";
+  startBtn.addEventListener("click", handleStartButton);
+}
+
 if (leftBtn) leftBtn.addEventListener("click", moveLeft);
 if (rightBtn) rightBtn.addEventListener("click", moveRight);
 if (downBtn) downBtn.addEventListener("click", softDrop);
 if (dropBtn) dropBtn.addEventListener("click", hardDrop);
 
 // -------------------------
-// SWIPE CONTROLS
+// SWIPE
 // -------------------------
 let touchStartX = 0;
 let touchStartY = 0;
 let touchMoved = false;
 
-boardEl.addEventListener(
-  "touchstart",
-  e => {
-    if (!gameRunning || !activeTile || resolving) return;
-    const t = e.changedTouches[0];
-    touchStartX = t.clientX;
-    touchStartY = t.clientY;
-    touchMoved = false;
-  },
-  { passive: true }
-);
+boardEl.addEventListener("touchstart", e => {
+  if (!gameRunning || !activeTile || resolving) return;
+  const t = e.changedTouches[0];
+  touchStartX = t.clientX;
+  touchStartY = t.clientY;
+  touchMoved = false;
+}, { passive: true });
 
-boardEl.addEventListener(
-  "touchmove",
-  e => {
-    if (!gameRunning || !activeTile || resolving) return;
-    const t = e.changedTouches[0];
-    const dx = t.clientX - touchStartX;
-    const dy = t.clientY - touchStartY;
+boardEl.addEventListener("touchmove", e => {
+  if (!gameRunning || !activeTile || resolving) return;
+  const t = e.changedTouches[0];
+  const dx = t.clientX - touchStartX;
+  const dy = t.clientY - touchStartY;
 
-    // prevent repeated micro moves
-    if (touchMoved) return;
+  if (touchMoved) return;
 
-    // horizontal swipe
-    if (Math.abs(dx) > 24 && Math.abs(dx) > Math.abs(dy)) {
-      if (dx > 0) moveRight();
-      else moveLeft();
-      touchMoved = true;
-    }
+  if (Math.abs(dx) > 24 && Math.abs(dx) > Math.abs(dy)) {
+    if (dx > 0) moveRight();
+    else moveLeft();
+    touchMoved = true;
+  } else if (dy > 24 && Math.abs(dy) > Math.abs(dx)) {
+    softDrop();
+    touchMoved = true;
+  }
+}, { passive: true });
 
-    // downward swipe
-    else if (dy > 24 && Math.abs(dy) > Math.abs(dx)) {
-      softDrop();
-      touchMoved = true;
-    }
-  },
-  { passive: true }
-);
+boardEl.addEventListener("touchend", e => {
+  if (!gameRunning || !activeTile || resolving) return;
 
-boardEl.addEventListener(
-  "touchend",
-  e => {
-    if (!gameRunning || !activeTile || resolving) return;
+  const t = e.changedTouches[0];
+  const dx = t.clientX - touchStartX;
+  const dy = t.clientY - touchStartY;
 
-    const t = e.changedTouches[0];
-    const dx = t.clientX - touchStartX;
-    const dy = t.clientY - touchStartY;
-
-    // strong downward swipe = hard drop
-    if (dy > 90 && Math.abs(dy) > Math.abs(dx)) {
-      hardDrop();
-    }
-  },
-  { passive: true }
-);
+  if (dy > 90 && Math.abs(dy) > Math.abs(dx)) {
+    hardDrop();
+  }
+}, { passive: true });
 
 // -------------------------
 // INIT
 // -------------------------
 initBoardUI();
 render();
+showMessage("Loading dictionary...");
