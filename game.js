@@ -27,10 +27,6 @@ const speedEl = document.getElementById("speed");
 const messageEl = document.getElementById("message");
 const startBtn = document.getElementById("startBtn");
 
-const leftBtn = document.getElementById("leftBtn");
-const rightBtn = document.getElementById("rightBtn");
-const downBtn = document.getElementById("downBtn");
-const dropBtn = document.getElementById("dropBtn");
 
 // -------------------------
 // DICTIONARY HOOK
@@ -55,17 +51,16 @@ function loadDictionary() {
 
   words = words
     .map(w => String(w).trim().toUpperCase())
-    .filter(w => /^[A-Z]{3,9}$/.test(w));
+    .filter(w => /^[A-Z]{3,7}$/.test(w));
 
   dict = new Set(words);
 
-  // fallback safety words
   [
-  "TEN", "HOOD", "BID", "DOG", "CAT", "WORD", "BED", "BAD", "GOOD",
-  "OWED", "KILL", "WELL", "HOME", "MAKE", "TIME", "SIDE", "LINE"
-].forEach(w => {
-  dict.add(w);
-});
+    "TEN", "HOOD", "BID", "DOG", "CAT", "WORD", "BED", "BAD", "GOOD",
+    "OWED", "KILL", "WELL", "HOME", "MAKE", "TIME", "SIDE", "LINE"
+  ].forEach(w => {
+    dict.add(w);
+  });
 
   console.log("Dictionary size:", dict.size);
   console.log("Has TEN?", dict.has("TEN"));
@@ -77,9 +72,14 @@ function loadDictionary() {
 // SCORING
 // -------------------------
 function wordPoints(len) {
-  if (len >= 3 && len <= 7) return len - 2;
+  if (len === 3) return 1;
+  if (len === 4) return 2;
+  if (len === 5) return 3;
+  if (len === 6) return 4;
+  if (len === 7) return 7;
   return 0;
 }
+
 function showComboPopup(text, isGold = false) {
   const popup = document.createElement("div");
   popup.className = isGold ? "combo-popup gold" : "combo-popup";
@@ -90,6 +90,7 @@ function showComboPopup(text, isGold = false) {
     popup.remove();
   }, 750);
 }
+
 // -------------------------
 // BOARD
 // -------------------------
@@ -242,7 +243,7 @@ function findWordsInCells(cells) {
   const found = [];
 
   for (let start = 0; start < cells.length; start++) {
-    for (let end = start + 3; end <= Math.min(cells.length, start + 9); end++) {
+    for (let end = start + 3; end <= Math.min(cells.length, start + 7); end++) {
       const slice = cells.slice(start, end);
       const word = slice.map(cell => cell.letter).join("").toUpperCase();
 
@@ -352,32 +353,42 @@ function applyGravity() {
 async function resolveBoard() {
   resolving = true;
   let cascade = 1;
+  let comboBaseTotal = 0;
 
   while (true) {
     const words = findAllWords();
     if (!words.length) break;
 
     const cellsToClear = new Set();
-    let basePoints = 0;
+    let longestWord = null;
 
     for (const item of words) {
-      basePoints += wordPoints(item.word.length);
+      if (!longestWord || item.word.length > longestWord.word.length) {
+        longestWord = item;
+      }
+
       for (const cell of item.cells) {
         cellsToClear.add(`${cell.row},${cell.col}`);
       }
     }
 
+    const basePoints = longestWord ? wordPoints(longestWord.word.length) : 0;
+    comboBaseTotal += basePoints;
+
     const multiplier = cascade === 1 ? 1 : cascade;
-    const gained = basePoints * multiplier;
+    const gained = comboBaseTotal * multiplier;
+
     score += gained;
     scoreEl.textContent = score;
-if (multiplier >= 2) {
-  showComboPopup(`Combo x${multiplier}`);
-}
 
-if (words.some(item => item.word.length === 7)) {
-  showComboPopup("7 LETTER WORD!", true);
-}
+    if (multiplier >= 2) {
+      showComboPopup(`Combo x${multiplier}`);
+    }
+
+    if (words.some(item => item.word.length === 7)) {
+      showComboPopup("7 LETTER WORD!", true);
+    }
+
     showMessage(
       multiplier > 1
         ? `Words: ${words.map(w => w.word).join(", ")} | Combo x${multiplier} | +${gained}`
@@ -385,8 +396,8 @@ if (words.some(item => item.word.length === 7)) {
     );
 
     flashCells(words, multiplier);
-await pause(220);
-clearFlashCells();
+    await pause(220);
+    clearFlashCells();
 
     for (const key of cellsToClear) {
       const [r, c] = key.split(",").map(Number);
@@ -524,10 +535,6 @@ if (startBtn) {
   startBtn.addEventListener("click", handleStartButton);
 }
 
-if (leftBtn) leftBtn.addEventListener("click", moveLeft);
-if (rightBtn) rightBtn.addEventListener("click", moveRight);
-if (downBtn) downBtn.addEventListener("click", softDrop);
-if (dropBtn) dropBtn.addEventListener("click", hardDrop);
 
 // -------------------------
 // SWIPE
@@ -552,13 +559,13 @@ boardEl.addEventListener("touchmove", e => {
 
   if (touchMoved) return;
 
-  if (Math.abs(dx) > 24 && Math.abs(dx) > Math.abs(dy)) {
+  if (Math.abs(dx) > 18 && Math.abs(dx) > Math.abs(dy)) {
     if (dx > 0) moveRight();
     else moveLeft();
     touchMoved = true;
-  } else if (dy > 24 && Math.abs(dy) > Math.abs(dx)) {
+  } else if (dy > 18 && Math.abs(dy) > Math.abs(dx)) {
     softDrop();
-    touchMoved = true;
+    touchStartY = t.clientY; // allows repeated downward swipes
   }
 }, { passive: true });
 
@@ -569,7 +576,7 @@ boardEl.addEventListener("touchend", e => {
   const dx = t.clientX - touchStartX;
   const dy = t.clientY - touchStartY;
 
-  if (dy > 90 && Math.abs(dy) > Math.abs(dx)) {
+  if (dy > 80 && Math.abs(dy) > Math.abs(dx)) {
     hardDrop();
   }
 }, { passive: true });
