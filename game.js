@@ -1,18 +1,19 @@
-// WORD TETRIS / WORD DROP GAME
-// Grid: 9 wide x 12 high
-// One tile falls at a time
-// Finds words horizontally and vertically
-// Uses existing dictionary.js if getDictionaryArray() exists
+// WORD DROP / WORD TETRIS
+// 9 columns x 12 rows
+// Swipe left/right/down on phone
+// Valid words clear, flash briefly, then tiles fall
+// Combo scoring on cascades: x2, x3, x4 etc.
 
 const COLS = 9;
 const ROWS = 12;
 
-const START_FALL_MS = 800;      // 0.8 sec
-const SPEED_UP_EVERY_MS = 60000; // every minute
-const SPEED_STEP_MS = 100;       // gets 0.1 sec faster
+const START_FALL_MS = 800;
+const SPEED_UP_EVERY_MS = 60000;
+const SPEED_STEP_MS = 100;
 const MIN_FALL_MS = 150;
 
-const LETTERS = "EEEEEEEEEEEEAAAAAAAARRRRRRRRIIIIIIIIOOOOOOONNNNNNTTTTTTLLLLSSSSUUUUDDDDGGGBBCCMMPPFFHHVVWWYYKJXQZ";
+const LETTERS =
+  "EEEEEEEEEEAAAAAARRRRRRRRIIIIIIIIOOOOOOONNNNNNTTTTTTLLLLSSSSSUUUUDDDDGGGBBCCMMPPFFHHVVWWYYKJXQZ";
 
 let board = [];
 let activeTile = null;
@@ -23,6 +24,7 @@ let fallInterval = START_FALL_MS;
 let fallTimer = null;
 let speedTimer = null;
 let resolving = false;
+let dict = new Set();
 
 const boardEl = document.getElementById("board");
 const scoreEl = document.getElementById("score");
@@ -31,29 +33,40 @@ const speedEl = document.getElementById("speed");
 const messageEl = document.getElementById("message");
 const startBtn = document.getElementById("startBtn");
 
+const leftBtn = document.getElementById("leftBtn");
+const rightBtn = document.getElementById("rightBtn");
+const downBtn = document.getElementById("downBtn");
+const dropBtn = document.getElementById("dropBtn");
+
 // -------------------------
 // DICTIONARY
 // -------------------------
-function getLiveDictionary() {
+function loadDictionary() {
+  let words = [];
+
   if (typeof getDictionaryArray === "function") {
-    return new Set(getDictionaryArray().map(w => w.toUpperCase()));
+    words = getDictionaryArray();
+  } else if (typeof DICTIONARY !== "undefined") {
+    if (Array.isArray(DICTIONARY)) words = DICTIONARY;
+    else if (DICTIONARY instanceof Set) words = [...DICTIONARY];
   }
 
-  if (typeof DICTIONARY !== "undefined") {
-    if (Array.isArray(DICTIONARY)) {
-      return new Set(DICTIONARY.map(w => w.toUpperCase()));
-    }
-    if (DICTIONARY instanceof Set) {
-      return new Set([...DICTIONARY].map(w => w.toUpperCase()));
-    }
-  }
+  words = words
+    .map(w => String(w).trim().toUpperCase())
+    .filter(w => /^[A-Z]{3,9}$/.test(w));
 
-  console.warn("No dictionary found. Make sure dictionary.js is loaded.");
-  return new Set();
+  dict = new Set(words);
+
+  // fallback test words so engine definitely proves itself
+  ["TEN", "HOOD", "BID", "DOG", "CAT", "WORD", "BED", "BAD", "GOOD"].forEach(w => {
+    dict.add(w);
+  });
+
+  console.log("Dictionary size:", dict.size);
+  console.log("Has TEN?", dict.has("TEN"));
+  console.log("Has HOOD?", dict.has("HOOD"));
+  console.log("Has BID?", dict.has("BID"));
 }
-
-// cached after start
-let DICT = new Set();
 
 // -------------------------
 // SCORING
@@ -70,7 +83,7 @@ function wordPoints(len) {
 }
 
 // -------------------------
-// BOARD SETUP
+// BOARD
 // -------------------------
 function createEmptyBoard() {
   return Array.from({ length: ROWS }, () => Array(COLS).fill(null));
@@ -103,8 +116,7 @@ function render() {
 
       if (tile) {
         cellEl.textContent = tile.letter;
-        cellEl.classList.add("filled");
-        cellEl.classList.add("grey-tile");
+        cellEl.classList.add("filled", "grey-tile");
       }
     }
   }
@@ -114,14 +126,21 @@ function render() {
     if (row >= 0 && row < ROWS && col >= 0 && col < COLS) {
       const cellEl = document.getElementById(`cell-${row}-${col}`);
       cellEl.textContent = letter;
-      cellEl.classList.add("active");
-      cellEl.classList.add("grey-tile");
+      cellEl.classList.add("active", "grey-tile");
     }
   }
 
   scoreEl.textContent = score;
   levelEl.textContent = level;
   speedEl.textContent = `${(fallInterval / 1000).toFixed(1)}s`;
+}
+
+function showMessage(msg) {
+  if (messageEl) messageEl.textContent = msg;
+}
+
+function pause(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 // -------------------------
@@ -161,18 +180,16 @@ function canMoveTo(row, col) {
 
 function moveLeft() {
   if (!gameRunning || !activeTile || resolving) return;
-  const newCol = activeTile.col - 1;
-  if (canMoveTo(activeTile.row, newCol)) {
-    activeTile.col = newCol;
+  if (canMoveTo(activeTile.row, activeTile.col - 1)) {
+    activeTile.col--;
     render();
   }
 }
 
 function moveRight() {
   if (!gameRunning || !activeTile || resolving) return;
-  const newCol = activeTile.col + 1;
-  if (canMoveTo(activeTile.row, newCol)) {
-    activeTile.col = newCol;
+  if (canMoveTo(activeTile.row, activeTile.col + 1)) {
+    activeTile.col++;
     render();
   }
 }
@@ -195,10 +212,8 @@ function hardDrop() {
 function tickFall() {
   if (!gameRunning || !activeTile || resolving) return;
 
-  const newRow = activeTile.row + 1;
-
-  if (canMoveTo(newRow, activeTile.col)) {
-    activeTile.row = newRow;
+  if (canMoveTo(activeTile.row + 1, activeTile.col)) {
+    activeTile.row++;
     render();
   } else {
     lockTile();
@@ -208,10 +223,7 @@ function tickFall() {
 function lockTile() {
   if (!activeTile) return;
 
-  board[activeTile.row][activeTile.col] = {
-    letter: activeTile.letter
-  };
-
+  board[activeTile.row][activeTile.col] = { letter: activeTile.letter };
   activeTile = null;
   render();
   resolveBoard();
@@ -220,176 +232,182 @@ function lockTile() {
 // -------------------------
 // WORD FINDING
 // -------------------------
-function findWordsInLine(cells) {
-  // cells = [{row, col, letter}, ...] contiguous non-empty line
-  const results = [];
+function findWordsInCells(cells) {
+  const found = [];
 
   for (let start = 0; start < cells.length; start++) {
-    for (let len = 3; len <= 9; len++) {
-      if (start + len > cells.length) continue;
+    for (let end = start + 3; end <= Math.min(cells.length, start + 9); end++) {
+      const slice = cells.slice(start, end);
+      const word = slice.map(cell => cell.letter).join("").toUpperCase();
 
-      const slice = cells.slice(start, start + len);
-      const word = slice.map(x => x.letter).join("");
-
-      if (DICT.has(word)) {
-        results.push({
+      if (dict.has(word)) {
+        found.push({
           word,
-          cells: slice.map(x => ({ row: x.row, col: x.col }))
+          cells: slice.map(cell => ({ row: cell.row, col: cell.col }))
         });
       }
     }
   }
 
-  return results;
+  return found;
 }
 
-function getHorizontalWords() {
-  const found = [];
+function findAllWords() {
+  let allWords = [];
 
+  // horizontal
   for (let r = 0; r < ROWS; r++) {
     let segment = [];
 
     for (let c = 0; c < COLS; c++) {
       if (board[r][c]) {
-        segment.push({ row: r, col: c, letter: board[r][c].letter });
+        segment.push({
+          row: r,
+          col: c,
+          letter: board[r][c].letter
+        });
       } else {
         if (segment.length >= 3) {
-          found.push(...findWordsInLine(segment));
+          allWords.push(...findWordsInCells(segment));
         }
         segment = [];
       }
     }
 
     if (segment.length >= 3) {
-      found.push(...findWordsInLine(segment));
+      allWords.push(...findWordsInCells(segment));
     }
   }
 
-  return found;
-}
-
-function getVerticalWords() {
-  const found = [];
-
+  // vertical
   for (let c = 0; c < COLS; c++) {
     let segment = [];
 
     for (let r = 0; r < ROWS; r++) {
       if (board[r][c]) {
-        segment.push({ row: r, col: c, letter: board[r][c].letter });
+        segment.push({
+          row: r,
+          col: c,
+          letter: board[r][c].letter
+        });
       } else {
         if (segment.length >= 3) {
-          found.push(...findWordsInLine(segment));
+          allWords.push(...findWordsInCells(segment));
         }
         segment = [];
       }
     }
 
     if (segment.length >= 3) {
-      found.push(...findWordsInLine(segment));
+      allWords.push(...findWordsInCells(segment));
     }
   }
 
-  return found;
+  // remove exact duplicates
+  const seen = new Set();
+  return allWords.filter(item => {
+    const key = item.word + "|" + item.cells.map(c => `${c.row},${c.col}`).join(";");
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
-function dedupeWords(words) {
-  const seen = new Set();
-  const unique = [];
+// -------------------------
+// FLASH VALID WORD CELLS
+// -------------------------
+function flashCells(words) {
+  const flashed = new Set();
 
   for (const item of words) {
-    const key = item.word + ":" + item.cells.map(c => `${c.row},${c.col}`).join("|");
-    if (!seen.has(key)) {
-      seen.add(key);
-      unique.push(item);
+    for (const cell of item.cells) {
+      const key = `${cell.row},${cell.col}`;
+      if (flashed.has(key)) continue;
+      flashed.add(key);
+
+      const el = document.getElementById(`cell-${cell.row}-${cell.col}`);
+      if (el) el.classList.add("flash");
     }
   }
-
-  return unique;
 }
 
-function findAllWords() {
-  const all = [...getHorizontalWords(), ...getVerticalWords()];
-  return dedupeWords(all);
+function clearFlashCells() {
+  const els = document.querySelectorAll(".cell.flash");
+  els.forEach(el => el.classList.remove("flash"));
 }
 
 // -------------------------
-// CLEAR + GRAVITY
+// GRAVITY
 // -------------------------
-function clearWordCells(words) {
-  const cellsToClear = new Set();
-
-  for (const wordObj of words) {
-    for (const cell of wordObj.cells) {
-      cellsToClear.add(`${cell.row},${cell.col}`);
-    }
-  }
-
-  for (const key of cellsToClear) {
-    const [r, c] = key.split(",").map(Number);
-    board[r][c] = null;
-  }
-
-  return cellsToClear.size;
-}
-
 function applyGravity() {
   for (let c = 0; c < COLS; c++) {
-    const stack = [];
+    const letters = [];
 
     for (let r = ROWS - 1; r >= 0; r--) {
       if (board[r][c] !== null) {
-        stack.push(board[r][c]);
+        letters.push(board[r][c]);
       }
     }
 
     for (let r = ROWS - 1; r >= 0; r--) {
-      board[r][c] = stack[ROWS - 1 - r] || null;
+      board[r][c] = letters[ROWS - 1 - r] || null;
     }
   }
 }
 
 // -------------------------
-// RESOLVE CASCADES / COMBOS
+// RESOLVE WORDS / COMBOS
 // -------------------------
 async function resolveBoard() {
   resolving = true;
-
-  let cascadeCount = 0;
+  let cascade = 1;
 
   while (true) {
     const words = findAllWords();
+    if (!words.length) break;
 
-    if (words.length === 0) break;
+    console.log("Words found:", words.map(w => w.word));
 
-    cascadeCount++;
+    let basePoints = 0;
+    const cellsToClear = new Set();
 
-    let base = 0;
-    for (const w of words) {
-      base += wordPoints(w.word.length);
+    for (const item of words) {
+      basePoints += wordPoints(item.word.length);
+      for (const cell of item.cells) {
+        cellsToClear.add(`${cell.row},${cell.col}`);
+      }
     }
 
-    const multiplier = cascadeCount === 1 ? 1 : cascadeCount;
-    const gained = base * multiplier;
+    const multiplier = cascade === 1 ? 1 : cascade;
+    const gained = basePoints * multiplier;
     score += gained;
+    scoreEl.textContent = score;
 
-    const wordList = words.map(w => w.word).join(", ");
-    if (multiplier > 1) {
-      showMessage(`Words: ${wordList} | Combo x${multiplier} | +${gained}`);
-    } else {
-      showMessage(`Words: ${wordList} | +${gained}`);
+    showMessage(
+      multiplier > 1
+        ? `Words: ${words.map(w => w.word).join(", ")} | Combo x${multiplier} | +${gained}`
+        : `Words: ${words.map(w => w.word).join(", ")} | +${gained}`
+    );
+
+    flashCells(words);
+    await pause(140);
+    clearFlashCells();
+
+    for (const key of cellsToClear) {
+      const [r, c] = key.split(",").map(Number);
+      board[r][c] = null;
     }
 
-    clearWordCells(words);
     render();
-    await pause(220);
+    await pause(120);
 
     applyGravity();
     render();
-    await pause(220);
+    await pause(140);
+
+    cascade++;
   }
 
-  showMessage(" ");
   resolving = false;
 
   if (gameRunning) {
@@ -399,7 +417,7 @@ async function resolveBoard() {
 }
 
 // -------------------------
-// TIMERS / GAME FLOW
+// TIMER / GAME FLOW
 // -------------------------
 function startFallLoop() {
   clearInterval(fallTimer);
@@ -419,7 +437,10 @@ function startSpeedLoop() {
 }
 
 function startGame() {
-  DICT = getLiveDictionary();
+  clearInterval(fallTimer);
+  clearInterval(speedTimer);
+
+  loadDictionary();
 
   board = createEmptyBoard();
   activeTile = null;
@@ -430,6 +451,10 @@ function startGame() {
   gameRunning = true;
 
   initBoardUI();
+  scoreEl.textContent = score;
+  levelEl.textContent = level;
+  speedEl.textContent = `${(fallInterval / 1000).toFixed(1)}s`;
+
   showMessage("Game started");
 
   spawnTile();
@@ -448,20 +473,10 @@ function endGame() {
   showMessage(`Game Over! Final score: ${score}`);
 }
 
-function pause(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-function showMessage(msg) {
-  if (messageEl) {
-    messageEl.textContent = msg;
-  }
-}
-
 // -------------------------
-// CONTROLS
+// KEYBOARD CONTROLS
 // -------------------------
-document.addEventListener("keydown", (e) => {
+document.addEventListener("keydown", e => {
   if (!gameRunning) return;
 
   if (e.key === "ArrowLeft") {
@@ -479,27 +494,80 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
-if (startBtn) {
-  startBtn.addEventListener("click", startGame);
-}
-
 // -------------------------
-// OPTIONAL MOBILE CONTROLS
-// If you add buttons with these IDs, they'll work:
-// leftBtn, rightBtn, downBtn, dropBtn
+// BUTTON CONTROLS
 // -------------------------
-const leftBtn = document.getElementById("leftBtn");
-const rightBtn = document.getElementById("rightBtn");
-const downBtn = document.getElementById("downBtn");
-const dropBtn = document.getElementById("dropBtn");
-
+if (startBtn) startBtn.addEventListener("click", startGame);
 if (leftBtn) leftBtn.addEventListener("click", moveLeft);
 if (rightBtn) rightBtn.addEventListener("click", moveRight);
 if (downBtn) downBtn.addEventListener("click", softDrop);
 if (dropBtn) dropBtn.addEventListener("click", hardDrop);
 
 // -------------------------
-// INITIAL BOARD UI
+// SWIPE CONTROLS
+// -------------------------
+let touchStartX = 0;
+let touchStartY = 0;
+let touchMoved = false;
+
+boardEl.addEventListener(
+  "touchstart",
+  e => {
+    if (!gameRunning || !activeTile || resolving) return;
+    const t = e.changedTouches[0];
+    touchStartX = t.clientX;
+    touchStartY = t.clientY;
+    touchMoved = false;
+  },
+  { passive: true }
+);
+
+boardEl.addEventListener(
+  "touchmove",
+  e => {
+    if (!gameRunning || !activeTile || resolving) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - touchStartX;
+    const dy = t.clientY - touchStartY;
+
+    // prevent repeated micro moves
+    if (touchMoved) return;
+
+    // horizontal swipe
+    if (Math.abs(dx) > 24 && Math.abs(dx) > Math.abs(dy)) {
+      if (dx > 0) moveRight();
+      else moveLeft();
+      touchMoved = true;
+    }
+
+    // downward swipe
+    else if (dy > 24 && Math.abs(dy) > Math.abs(dx)) {
+      softDrop();
+      touchMoved = true;
+    }
+  },
+  { passive: true }
+);
+
+boardEl.addEventListener(
+  "touchend",
+  e => {
+    if (!gameRunning || !activeTile || resolving) return;
+
+    const t = e.changedTouches[0];
+    const dx = t.clientX - touchStartX;
+    const dy = t.clientY - touchStartY;
+
+    // strong downward swipe = hard drop
+    if (dy > 90 && Math.abs(dy) > Math.abs(dx)) {
+      hardDrop();
+    }
+  },
+  { passive: true }
+);
+
+// -------------------------
+// INIT
 // -------------------------
 initBoardUI();
 render();
