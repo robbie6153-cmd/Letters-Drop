@@ -1,4 +1,4 @@
-const COLS = 9;
+const COLS = 7;
 const ROWS = 12;
 
 const START_FALL_MS = 800;

@@ -82,8 +82,9 @@ h1 {
 
 .board {
   width: 100%;
-  aspect-ratio: 9 / 12;
+  aspect-ratio: 7 / 12;
   display: grid;
+  grid-template-columns: repeat(7, 1fr);
   gap: 4px;
   padding: 8px;
   background:
