@@ -60,9 +60,12 @@ function loadDictionary() {
   dict = new Set(words);
 
   // fallback safety words
-  ["TEN", "HOOD", "BID", "DOG", "CAT", "WORD", "BED", "BAD", "GOOD"].forEach(w => {
-    dict.add(w);
-  });
+  [
+  "TEN", "HOOD", "BID", "DOG", "CAT", "WORD", "BED", "BAD", "GOOD",
+  "OWED", "KILL", "WELL", "HOME", "MAKE", "TIME", "SIDE", "LINE"
+].forEach(w => {
+  dict.add(w);
+});
 
   console.log("Dictionary size:", dict.size);
   console.log("Has TEN?", dict.has("TEN"));
