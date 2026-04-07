@@ -440,6 +440,11 @@ function startGame() {
   clearInterval(fallTimer);
   clearInterval(speedTimer);
 
+  if (typeof isDictionaryLoaded === "function" && !isDictionaryLoaded()) {
+    showMessage("Dictionary still loading...");
+    return;
+  }
+
   loadDictionary();
 
   board = createEmptyBoard();
