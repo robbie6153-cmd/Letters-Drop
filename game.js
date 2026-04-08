@@ -23,7 +23,6 @@ let dict = new Set();
 const boardEl = document.getElementById("board");
 const scoreEl = document.getElementById("score");
 const levelEl = document.getElementById("level");
-const speedEl = document.getElementById("speed");
 const messageEl = document.getElementById("message");
 const startBtn = document.getElementById("startBtn");
 
@@ -141,6 +140,8 @@ function render() {
 
   scoreEl.textContent = score;
   levelEl.textContent = level;
+ 
+if (speedEl) {
   speedEl.textContent = `${(fallInterval / 1000).toFixed(1)}s`;
 }
 
