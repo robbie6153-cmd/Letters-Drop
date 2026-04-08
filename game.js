@@ -178,7 +178,18 @@ function spawnTile() {
 
   return true;
 }
+let nextLetterCooldown = false;
 
+function dropNextLetter() {
+  if (gameEnded || nextLetterCooldown) return;
+
+  spawnTile(); // make sure this matches your actual function name
+
+  nextLetterCooldown = true;
+  setTimeout(() => {
+    nextLetterCooldown = false;
+  }, 500);
+}
 // -------------------------
 // MOVEMENT
 // -------------------------

@@ -320,3 +320,12 @@ h1 {
     padding-bottom: 12px;
   }
 }
+.next-letter-btn {
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.next-letter-btn:active {
+  transform: scale(0.95);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3) inset;
+}
