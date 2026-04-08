@@ -19,24 +19,14 @@ let fallTimer = null;
 let speedTimer = null;
 let resolving = false;
 let dict = new Set();
+let nextLetterCooldown = false;
+let touchActive = false;
 
 const boardEl = document.getElementById("board");
 const scoreEl = document.getElementById("score");
 const levelEl = document.getElementById("level");
 const messageEl = document.getElementById("message");
 const startBtn = document.getElementById("startBtn");
-
-
-// -------------------------
-// DICTIONARY HOOK
-// -------------------------
-function onDictionaryReady() {
-  if (startBtn) {
-    startBtn.disabled = false;
-    startBtn.textContent = "Start Game";
-  }
-  showMessage("Dictionary loaded. Ready to play.");
-}
 
 // -------------------------
 // DICTIONARY
@@ -57,14 +47,31 @@ function loadDictionary() {
   [
     "TEN", "HOOD", "BID", "DOG", "CAT", "WORD", "BED", "BAD", "GOOD",
     "OWED", "KILL", "WELL", "HOME", "MAKE", "TIME", "SIDE", "LINE"
-  ].forEach(w => {
-    dict.add(w);
-  });
+  ].forEach(w => dict.add(w));
 
   console.log("Dictionary size:", dict.size);
-  console.log("Has TEN?", dict.has("TEN"));
-  console.log("Has HOOD?", dict.has("HOOD"));
-  console.log("Has BID?", dict.has("BID"));
+}
+
+// -------------------------
+// UI
+// -------------------------
+function showMessage(msg) {
+  if (messageEl) messageEl.textContent = msg;
+}
+
+function pause(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function showComboPopup(text, isGold = false) {
+  const popup = document.createElement("div");
+  popup.className = isGold ? "combo-popup gold" : "combo-popup";
+  popup.textContent = text;
+  document.body.appendChild(popup);
+
+  setTimeout(() => {
+    popup.remove();
+  }, 750);
 }
 
 // -------------------------
@@ -77,17 +84,6 @@ function wordPoints(len) {
   if (len === 6) return 4;
   if (len === 7) return 7;
   return 0;
-}
-
-function showComboPopup(text, isGold = false) {
-  const popup = document.createElement("div");
-  popup.className = isGold ? "combo-popup gold" : "combo-popup";
-  popup.textContent = text;
-  document.body.appendChild(popup);
-
-  setTimeout(() => {
-    popup.remove();
-  }, 750);
 }
 
 // -------------------------
@@ -117,8 +113,9 @@ function render() {
   for (let r = 0; r < ROWS; r++) {
     for (let c = 0; c < COLS; c++) {
       const cellEl = document.getElementById(`cell-${r}-${c}`);
-      const tile = board[r][c];
+      if (!cellEl) continue;
 
+      const tile = board[r][c];
       cellEl.className = "cell";
       cellEl.textContent = "";
 
@@ -133,24 +130,15 @@ function render() {
     const { row, col, letter } = activeTile;
     if (row >= 0 && row < ROWS && col >= 0 && col < COLS) {
       const cellEl = document.getElementById(`cell-${row}-${col}`);
-      cellEl.textContent = letter;
-      cellEl.classList.add("active", "grey-tile");
+      if (cellEl) {
+        cellEl.textContent = letter;
+        cellEl.classList.add("active", "grey-tile");
+      }
     }
   }
 
-  scoreEl.textContent = score;
-  levelEl.textContent = level;
- 
-if (speedEl) {
-  speedEl.textContent = `${(fallInterval / 1000).toFixed(1)}s`;
-}
-
-function showMessage(msg) {
-  if (messageEl) messageEl.textContent = msg;
-}
-
-function pause(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  if (scoreEl) scoreEl.textContent = score;
+  if (levelEl) levelEl.textContent = level;
 }
 
 // -------------------------
@@ -171,27 +159,26 @@ function spawnTile() {
 
   touchActive = false;
 
-activeTile = {
-  row: spawnRow,
-  col: spawnCol,
-  letter: randomLetter()
-};
+  activeTile = {
+    row: spawnRow,
+    col: spawnCol,
+    letter: randomLetter()
+  };
 
-return true;
+  return true;
 }
 
-let nextLetterCooldown = false;
-
 function dropNextLetter() {
-  if (!gameRunning || nextLetterCooldown) return;
+  if (!gameRunning || !activeTile || nextLetterCooldown || resolving) return;
 
-  spawnTile();
+  lockTile();
 
   nextLetterCooldown = true;
   setTimeout(() => {
     nextLetterCooldown = false;
-  }, 500);
+  }, 300);
 }
+
 // -------------------------
 // MOVEMENT
 // -------------------------
@@ -225,9 +212,11 @@ function softDrop() {
 
 function hardDrop() {
   if (!gameRunning || !activeTile || resolving) return;
+
   while (canMoveTo(activeTile.row + 1, activeTile.col)) {
     activeTile.row++;
   }
+
   lockTile();
 }
 
@@ -395,7 +384,7 @@ async function resolveBoard() {
     const gained = comboBaseTotal * multiplier;
 
     score += gained;
-    scoreEl.textContent = score;
+    if (scoreEl) scoreEl.textContent = score;
 
     if (multiplier >= 2) {
       showComboPopup(`Combo x${multiplier}`);
@@ -451,20 +440,20 @@ function resetGameState() {
   level = 1;
   fallInterval = START_FALL_MS;
   resolving = false;
+  nextLetterCooldown = false;
+  touchActive = false;
 
   initBoardUI();
   render();
-
-  scoreEl.textContent = score;
-  levelEl.textContent = level;
-  speedEl.textContent = `${(fallInterval / 1000).toFixed(1)}s`;
 }
 
 function startNewGame() {
   loadDictionary();
   resetGameState();
+
   gameRunning = true;
   showMessage("Game started");
+
   spawnTile();
   render();
   startFallLoop();
@@ -477,11 +466,6 @@ function startNewGame() {
 }
 
 function handleStartButton() {
-  if (typeof isDictionaryLoaded === "function" && !isDictionaryLoaded()) {
-    showMessage("Dictionary still loading...");
-    return;
-  }
-
   if (!gameRunning) {
     startNewGame();
     return;
@@ -505,8 +489,8 @@ function startSpeedLoop() {
   speedTimer = setInterval(() => {
     fallInterval = Math.max(MIN_FALL_MS, fallInterval - SPEED_STEP_MS);
     level++;
-    startFallLoop();
     render();
+    startFallLoop();
   }, SPEED_UP_EVERY_MS);
 }
 
@@ -525,7 +509,7 @@ function endGame() {
 }
 
 // -------------------------
-// INPUTS
+// KEYBOARD
 // -------------------------
 document.addEventListener("keydown", e => {
   if (!gameRunning) return;
@@ -545,17 +529,9 @@ document.addEventListener("keydown", e => {
   }
 });
 
-if (startBtn) {
-  startBtn.disabled = true;
-  startBtn.textContent = "Loading...";
-  startBtn.addEventListener("click", handleStartButton);
-}
-
 // -------------------------
 // SWIPE
 // -------------------------
-let touchActive = false;
-
 function getBoardTouchPosition(touch) {
   const rect = boardEl.getBoundingClientRect();
   const cellWidth = rect.width / COLS;
@@ -564,7 +540,6 @@ function getBoardTouchPosition(touch) {
   let x = touch.clientX - rect.left;
   let y = touch.clientY - rect.top;
 
-  // clamp inside board
   x = Math.max(0, Math.min(rect.width - 1, x));
   y = Math.max(0, Math.min(rect.height - 1, y));
 
@@ -580,7 +555,6 @@ boardEl.addEventListener("touchstart", e => {
   const t = e.changedTouches[0];
   const pos = getBoardTouchPosition(t);
 
-  // only start swipe if finger begins on active tile
   if (pos.row !== activeTile.row || pos.col !== activeTile.col) {
     touchActive = false;
     return;
@@ -595,7 +569,6 @@ boardEl.addEventListener("touchmove", e => {
   const t = e.changedTouches[0];
   const pos = getBoardTouchPosition(t);
 
-  // horizontal follow
   while (activeTile.col < pos.col && canMoveTo(activeTile.row, activeTile.col + 1)) {
     activeTile.col++;
   }
@@ -603,7 +576,6 @@ boardEl.addEventListener("touchmove", e => {
     activeTile.col--;
   }
 
-  // vertical follow downward only
   while (activeTile.row < pos.row && canMoveTo(activeTile.row + 1, activeTile.col)) {
     activeTile.row++;
   }
@@ -620,4 +592,10 @@ boardEl.addEventListener("touchend", () => {
 // -------------------------
 initBoardUI();
 render();
-showMessage("Loading dictionary...");
+showMessage("Press Start");
+
+if (startBtn) {
+  startBtn.disabled = false;
+  startBtn.textContent = "Start Game";
+  startBtn.addEventListener("click", handleStartButton);
+}
