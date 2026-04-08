@@ -170,20 +170,21 @@ function spawnTile() {
 
   touchActive = false;
 
-  activeTile = {
-    row: spawnRow,
-    col: spawnCol,
-    letter: randomLetter()
-  };
+activeTile = {
+  row: spawnRow,
+  col: spawnCol,
+  letter: randomLetter()
+};
 
-  return true;
+return true;
 }
+
 let nextLetterCooldown = false;
 
 function dropNextLetter() {
-  if (gameEnded || nextLetterCooldown) return;
+  if (!gameRunning || nextLetterCooldown) return;
 
-  spawnTile(); // make sure this matches your actual function name
+  spawnTile();
 
   nextLetterCooldown = true;
   setTimeout(() => {
