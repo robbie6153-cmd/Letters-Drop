@@ -21,7 +21,9 @@ let resolving = false;
 let dict = new Set();
 let nextLetterCooldown = false;
 let touchActive = false;
+let nextLetter = null;
 
+const nextLetterDisplayEl = document.getElementById("nextLetterDisplay");
 const boardEl = document.getElementById("board");
 const scoreEl = document.getElementById("score");
 const levelEl = document.getElementById("level");
@@ -147,7 +149,6 @@ function render() {
 function randomLetter() {
   return LETTERS[Math.floor(Math.random() * LETTERS.length)];
 }
-
 function spawnTile() {
   const spawnCol = Math.floor(COLS / 2);
   const spawnRow = 0;
@@ -159,14 +160,22 @@ function spawnTile() {
 
   touchActive = false;
 
+  if (!nextLetter) {
+    nextLetter = randomLetter();
+  }
+
   activeTile = {
     row: spawnRow,
     col: spawnCol,
-    letter: randomLetter()
+    letter: nextLetter
   };
+
+  nextLetter = randomLetter();
+  updateNextLetterDisplay();
 
   return true;
 }
+
 
 function dropNextLetter() {
   if (!gameRunning || !activeTile || nextLetterCooldown || resolving) return;
@@ -430,6 +439,11 @@ async function resolveBoard() {
 // -------------------------
 // GAME FLOW
 // -------------------------
+function updateNextLetterDisplay() {
+  if (nextLetterDisplayEl) {
+    nextLetterDisplayEl.textContent = nextLetter || "";
+  }
+}
 function resetGameState() {
   clearInterval(fallTimer);
   clearInterval(speedTimer);
@@ -442,6 +456,9 @@ function resetGameState() {
   resolving = false;
   nextLetterCooldown = false;
   touchActive = false;
+
+  nextLetter = randomLetter();
+  updateNextLetterDisplay();
 
   initBoardUI();
   render();
