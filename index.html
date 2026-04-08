@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Word Drop</title>
+  <title>Letters Drop</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="game-container">
-    <h1>WORD DROP</h1>
+    <h1>LETTERS DROP</h1>
 
     <div class="top-bar">
       <div class="stat-box">
@@ -21,10 +21,11 @@
         <span id="level">1</span>
       </div>
 
-     <div class="stat-box next-letter-btn" onclick="dropNextLetter()">
-  <div class="label">NEXT</div>
-  <div class="value">LETTER</div>
-</div>
+      <div class="stat-box next-letter-btn" onclick="dropNextLetter()">
+        <div class="label">NEXT</div>
+        <div class="value">LETTER</div>
+      </div>
+    </div>
 
     <div id="message" class="message">Press Start</div>
 
@@ -33,7 +34,7 @@
     <div class="controls-row">
       <button id="startBtn" class="main-btn">Start Game</button>
     </div>
-
+  </div>
 
   <script src="dictionary.js"></script>
   <script src="game.js"></script>
