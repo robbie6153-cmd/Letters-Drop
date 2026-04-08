@@ -180,7 +180,7 @@ function spawnTile() {
 function dropNextLetter() {
   if (!gameRunning || !activeTile || nextLetterCooldown || resolving) return;
 
-  lockTile();
+  hardDrop();
 
   nextLetterCooldown = true;
   setTimeout(() => {
