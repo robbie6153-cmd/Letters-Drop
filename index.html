@@ -1,151 +1,43 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-GFMC9780RY"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-GFMC9780RY');
-  </script>
-
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Letters In – Free Daily Word Game</title>
-<meta name="description" content="Play Letters In, a free daily word game. Find as many words as you can from 9 letters in 200 seconds. New puzzle every day!">
-  <link rel="stylesheet" href="style.css">
-
-  <!-- AdSense -->
-  <script async
-    src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7137119315620021"
-    crossorigin="anonymous"></script>
-
-  <script>
-    function showRules() {
-      document.getElementById("home-screen").style.display = "none";
-      document.getElementById("rules-screen").style.display = "block";
-    }
-
-    function startGame() {
-      document.getElementById("home-screen").style.display = "none";
-      document.getElementById("rules-screen").style.display = "none";
-      document.getElementById("game").style.display = "block";
-    }
-  </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Letters Drop</title>
+  <link rel="stylesheet" href="style.css?v=3" />
 </head>
-
 <body>
+  <div class="game-container">
+    <h1>LETTERS DROP</h1>
 
-  <div class="home-page">
-
-    <div id="home-screen">
-      <div class="home-container">
-        <img src="homepage.jpg" alt="Letters In Home">
-
-        <a href="index.html" class="hotspot home-link" aria-label="Home"></a>
-        <a href="leaderboard.html" class="hotspot leaderboard-link" aria-label="Leaderboard"></a>
-        <a href="privacy.html" class="hotspot privacy-link" aria-label="Privacy Policy"></a>
-        <a href="terms.html" class="hotspot terms-link" aria-label="Terms and Conditions"></a>
-        <a href="about.html" class="hotspot about-link" aria-label="About"></a>
-        <a href="settings.html" class="hotspot settings-link" aria-label="Settings"></a>
-        <a href="profile.html" class="hotspot profile-link" aria-label="Profile"></a>
-
-        <div class="play-button" onclick="showRules()" aria-label="Play Now"></div>
-
-        <a href="contact.html" class="hotspot contact-link" aria-label="Contact Us"></a>
+    <div class="top-bar">
+      <div class="stat-box">
+        <span class="label">Score</span>
+        <span id="score">0</span>
       </div>
-    </div>
-</div> <!-- end of home-screen -->
 
-<div id="home-content">
+      <div class="stat-box">
+        <span class="label">Level</span>
+        <span id="level">1</span>
+      </div>
 
-  <div class="seo-text">
-    <h1>Letters In</h1>
-<h2 class="subheading">Free Daily Word Game</h2>
-    <p>
-      Play Letters In, a free daily word puzzle game. Find as many words as possible from 9 letters before time runs out.
-      Perfect for fans of Wordle, anagrams, and brain training games.
-    </p>
-  </div>
-
-  <section class="info-section">
-    <h2>How to Play Letters In</h2>
-    <p>
-      Letters In is a free daily word game. Each day, players are given 9 letters and must make as many valid words as possible before the timer runs out.
-    </p>
-    <p>
-      Words must be at least 3 letters long. You will score a point for each word, 2 points for a six letter word, 3 points for a seven letter word, 4 points for an eight letter word and 5 ponits for a nine letter word, so players are encouraged to find as many high-value words as possible before time runs out.
-    </p>
-    <p>
-      The game resets daily ad midnight GMT, giving all players the same challenge each day.
-    </p>
-  </section>
-
-  <section class="info-section">
-    <h2>Why Word Games Matter</h2>
-    <p>
-      Word games can help improve vocabulary, spelling, pattern recognition and mental agility.
-    </p>
-    <p>
-      Daily puzzle games also encourage memory, concentration and problem-solving skills.
-    </p>
-    <p>
-      Letters In was designed to be simple, accessible and enjoyable while providing a fun mental challenge each day.
-    </p>
-  </section>
-
+     <div class="stat-box next-letter-btn" onclick="dropNextLetter()">
+  <div class="label">NEXT</div>
+  <div class="value" id="nextLetterDisplay">A</div>
 </div>
-<div id="rules-screen" style="display:none;">
-      <div class="rules-container">
-        <h1>How To Play</h1>
-
-        <p>1. Make as many words as you can from the 9 letters in 200 seconds.</p>
-        <p>2. Words must be in the English dictionary and three letters or more.</p>
-        <p>3. You score one point per word, two points for a 6 letter word, three points for a 7 letter word, four points for an 8 letter word and five points for a 9 letter word.</p>
-        <p>4. There will always be a 9 letter word.</p>
-        <p>5. No words such as names and places.</p>
-        <p>6. A new game begins at midnight GMT.</p>
-
-        <!-- Rules screen ad -->
-        <div class="ad-container">
-          <ins class="adsbygoogle"
-               style="display:block"
-               data-ad-client="ca-pub-7137119315620021"
-               data-ad-slot="5369699218"
-               data-ad-format="auto"
-               data-full-width-responsive="true"></ins>
-        </div>
-
-        <script>
-          (adsbygoogle = window.adsbygoogle || []).push({});
-        </script>
-
-        <button onclick="startGame()">Start Game</button>
-      </div>
     </div>
 
-    <div id="game" style="display:none;">
-  <h1>Letters In</h1>
+    <div id="message" class="message">Press Start</div>
 
-  <div id="letters"></div>
+    <div id="board" class="board"></div>
 
-  <div id="infoBar">
-    <div>Time: <span id="time">200</span></div>
-    <div>Score: <span id="score">0</span></div>
+    <div class="controls-row">
+     <button id="startBtn" class="main-btn" onclick="startNewGame()">Start Game</button>
+    </div>
   </div>
 
-  <div class="input-row">
-    <input type="text" id="wordInput" placeholder="Type a word..." autocomplete="off">
-    <button id="submitBtn">Submit</button>
-  </div>
-
-  <div id="message"></div>
-  <div id="finalScore"></div>
-</div>
-
-  <script src="dictionary.js"></script>
-  <script src="game.js"></script>
+  <script src="dictionary.js?v=3"></script>
+<script src="game.js?v=3"></script>
 
 </body>
 </html>
