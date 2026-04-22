@@ -9,6 +9,8 @@ const MIN_FALL_MS = 150;
 const LETTERS =
   "EEEEEEEEEEEEAAAAAAAARRRRRRRRIIIIIIIIOOOOOOONNNNNNTTTTTTLLLLSSSSUUUUDDDDGGGBBCCMMPPFFHHVVWWYYKJXQZ";
 
+const BLANK_TILE_CHANCE = 1 / 6;
+
 let board = [];
 let activeTile = null;
 let score = 0;
@@ -21,7 +23,11 @@ let resolving = false;
 let dict = new Set();
 let nextLetterCooldown = false;
 let touchActive = false;
-let nextLetter = null;
+let nextTile = null;
+
+const homeScreenEl = document.getElementById("homeScreen");
+const gameContainerEl = document.getElementById("gameContainer");
+const playNowBtnEl = document.getElementById("playNowBtn");
 
 const nextLetterDisplayEl = document.getElementById("nextLetterDisplay");
 const boardEl = document.getElementById("board");
@@ -29,6 +35,18 @@ const scoreEl = document.getElementById("score");
 const levelEl = document.getElementById("level");
 const messageEl = document.getElementById("message");
 const startBtn = document.getElementById("startBtn");
+
+// -------------------------
+// HOME SCREEN
+// -------------------------
+function setupHomeScreen() {
+  if (!playNowBtnEl || !homeScreenEl || !gameContainerEl) return;
+
+  playNowBtnEl.addEventListener("click", () => {
+    homeScreenEl.style.display = "none";
+    gameContainerEl.style.display = "block";
+  });
+}
 
 // -------------------------
 // DICTIONARY
@@ -96,6 +114,8 @@ function createEmptyBoard() {
 }
 
 function initBoardUI() {
+  if (!boardEl) return;
+
   boardEl.innerHTML = "";
   boardEl.style.display = "grid";
   boardEl.style.gridTemplateColumns = `repeat(${COLS}, 1fr)`;
@@ -122,18 +142,18 @@ function render() {
       cellEl.textContent = "";
 
       if (tile) {
-        cellEl.textContent = tile.letter;
+        cellEl.textContent = tile.isBlank ? "?" : tile.letter;
         cellEl.classList.add("filled", "grey-tile");
       }
     }
   }
 
   if (activeTile) {
-    const { row, col, letter } = activeTile;
+    const { row, col, letter, isBlank } = activeTile;
     if (row >= 0 && row < ROWS && col >= 0 && col < COLS) {
       const cellEl = document.getElementById(`cell-${row}-${col}`);
       if (cellEl) {
-        cellEl.textContent = letter;
+        cellEl.textContent = isBlank ? "?" : letter;
         cellEl.classList.add("active", "grey-tile");
       }
     }
@@ -149,6 +169,20 @@ function render() {
 function randomLetter() {
   return LETTERS[Math.floor(Math.random() * LETTERS.length)];
 }
+
+function randomUpcomingTile() {
+  const isBlank = Math.random() < BLANK_TILE_CHANCE;
+  return {
+    isBlank,
+    letter: isBlank ? "?" : randomLetter()
+  };
+}
+
+function updateNextLetterDisplay() {
+  if (!nextLetterDisplayEl) return;
+  nextLetterDisplayEl.textContent = nextTile ? nextTile.letter : "";
+}
+
 function spawnTile() {
   const spawnCol = Math.floor(COLS / 2);
   const spawnRow = 0;
@@ -160,22 +194,22 @@ function spawnTile() {
 
   touchActive = false;
 
-  if (!nextLetter) {
-    nextLetter = randomLetter();
+  if (!nextTile) {
+    nextTile = randomUpcomingTile();
   }
 
   activeTile = {
     row: spawnRow,
     col: spawnCol,
-    letter: nextLetter
+    letter: nextTile.letter,
+    isBlank: nextTile.isBlank
   };
 
-  nextLetter = randomLetter();
+  nextTile = randomUpcomingTile();
   updateNextLetterDisplay();
 
   return true;
 }
-
 
 function dropNextLetter() {
   if (!gameRunning || !activeTile || nextLetterCooldown || resolving) return;
@@ -240,10 +274,36 @@ function tickFall() {
   }
 }
 
+function chooseBlankLetter() {
+  let chosen = "";
+
+  while (true) {
+    chosen = prompt("Blank tile landed. Choose a letter A-Z:", "") || "";
+    chosen = chosen.trim().toUpperCase();
+
+    if (/^[A-Z]$/.test(chosen)) {
+      return chosen;
+    }
+
+    alert("Please enter a single letter from A to Z.");
+  }
+}
+
 function lockTile() {
   if (!activeTile) return;
 
-  board[activeTile.row][activeTile.col] = { letter: activeTile.letter };
+  let placedLetter = activeTile.letter;
+  let placedIsBlank = activeTile.isBlank;
+
+  if (placedIsBlank) {
+    placedLetter = chooseBlankLetter();
+  }
+
+  board[activeTile.row][activeTile.col] = {
+    letter: placedLetter,
+    isBlank: false
+  };
+
   activeTile = null;
   touchActive = false;
   render();
@@ -276,30 +336,24 @@ function findWordsInCells(cells) {
 function findAllWords() {
   let allWords = [];
 
+  // HORIZONTAL ONLY
   for (let r = 0; r < ROWS; r++) {
     let segment = [];
+
     for (let c = 0; c < COLS; c++) {
       if (board[r][c]) {
         segment.push({ row: r, col: c, letter: board[r][c].letter });
       } else {
-        if (segment.length >= 3) allWords.push(...findWordsInCells(segment));
+        if (segment.length >= 3) {
+          allWords.push(...findWordsInCells(segment));
+        }
         segment = [];
       }
     }
-    if (segment.length >= 3) allWords.push(...findWordsInCells(segment));
-  }
 
-  for (let c = 0; c < COLS; c++) {
-    let segment = [];
-    for (let r = 0; r < ROWS; r++) {
-      if (board[r][c]) {
-        segment.push({ row: r, col: c, letter: board[r][c].letter });
-      } else {
-        if (segment.length >= 3) allWords.push(...findWordsInCells(segment));
-        segment = [];
-      }
+    if (segment.length >= 3) {
+      allWords.push(...findWordsInCells(segment));
     }
-    if (segment.length >= 3) allWords.push(...findWordsInCells(segment));
   }
 
   const seen = new Set();
@@ -310,7 +364,6 @@ function findAllWords() {
     return true;
   });
 }
-
 // -------------------------
 // FLASH
 // -------------------------
@@ -361,6 +414,10 @@ function applyGravity() {
   }
 }
 
+function clearEntireBoard() {
+  board = createEmptyBoard();
+}
+
 // -------------------------
 // RESOLVE
 // -------------------------
@@ -373,6 +430,7 @@ async function resolveBoard() {
     const words = findAllWords();
     if (!words.length) break;
 
+    const hasSevenLetterWord = words.some(item => item.word.length === 7);
     const cellsToClear = new Set();
     let longestWord = null;
 
@@ -399,31 +457,39 @@ async function resolveBoard() {
       showComboPopup(`Combo x${multiplier}`);
     }
 
-    if (words.some(item => item.word.length === 7)) {
+    if (hasSevenLetterWord) {
       showComboPopup("7 LETTER WORD!", true);
     }
 
     showMessage(
-      multiplier > 1
-        ? `Words: ${words.map(w => w.word).join(", ")} | Combo x${multiplier} | +${gained}`
-        : `Words: ${words.map(w => w.word).join(", ")} | +${gained}`
+      hasSevenLetterWord
+        ? `Words: ${words.map(w => w.word).join(", ")} | GRID CLEAR! | +${gained}`
+        : multiplier > 1
+          ? `Words: ${words.map(w => w.word).join(", ")} | Combo x${multiplier} | +${gained}`
+          : `Words: ${words.map(w => w.word).join(", ")} | +${gained}`
     );
 
     flashCells(words, multiplier);
     await pause(220);
     clearFlashCells();
 
-    for (const key of cellsToClear) {
-      const [r, c] = key.split(",").map(Number);
-      board[r][c] = null;
+    if (hasSevenLetterWord) {
+      clearEntireBoard();
+      render();
+      await pause(160);
+    } else {
+      for (const key of cellsToClear) {
+        const [r, c] = key.split(",").map(Number);
+        board[r][c] = null;
+      }
+
+      render();
+      await pause(100);
+
+      applyGravity();
+      render();
+      await pause(140);
     }
-
-    render();
-    await pause(100);
-
-    applyGravity();
-    render();
-    await pause(140);
 
     cascade++;
   }
@@ -439,11 +505,6 @@ async function resolveBoard() {
 // -------------------------
 // GAME FLOW
 // -------------------------
-function updateNextLetterDisplay() {
-  if (nextLetterDisplayEl) {
-    nextLetterDisplayEl.textContent = nextLetter || "";
-  }
-}
 function resetGameState() {
   clearInterval(fallTimer);
   clearInterval(speedTimer);
@@ -457,7 +518,7 @@ function resetGameState() {
   nextLetterCooldown = false;
   touchActive = false;
 
-  nextLetter = randomLetter();
+  nextTile = randomUpcomingTile();
   updateNextLetterDisplay();
 
   initBoardUI();
@@ -566,50 +627,57 @@ function getBoardTouchPosition(touch) {
   return { row, col };
 }
 
-boardEl.addEventListener("touchstart", e => {
-  if (!gameRunning || !activeTile || resolving) return;
+if (boardEl) {
+  boardEl.addEventListener("touchstart", e => {
+    if (!gameRunning || !activeTile || resolving) return;
 
-  const t = e.changedTouches[0];
-  const pos = getBoardTouchPosition(t);
+    const t = e.changedTouches[0];
+    const pos = getBoardTouchPosition(t);
 
-  if (pos.row !== activeTile.row || pos.col !== activeTile.col) {
+    if (pos.row !== activeTile.row || pos.col !== activeTile.col) {
+      touchActive = false;
+      return;
+    }
+
+    touchActive = true;
+  }, { passive: true });
+
+  boardEl.addEventListener("touchmove", e => {
+    if (!gameRunning || !activeTile || resolving || !touchActive) return;
+
+    const t = e.changedTouches[0];
+    const pos = getBoardTouchPosition(t);
+
+    while (activeTile.col < pos.col && canMoveTo(activeTile.row, activeTile.col + 1)) {
+      activeTile.col++;
+    }
+    while (activeTile.col > pos.col && canMoveTo(activeTile.row, activeTile.col - 1)) {
+      activeTile.col--;
+    }
+
+    while (activeTile.row < pos.row && canMoveTo(activeTile.row + 1, activeTile.col)) {
+      activeTile.row++;
+    }
+
+    render();
+  }, { passive: true });
+
+  boardEl.addEventListener("touchend", () => {
     touchActive = false;
-    return;
-  }
-
-  touchActive = true;
-}, { passive: true });
-
-boardEl.addEventListener("touchmove", e => {
-  if (!gameRunning || !activeTile || resolving || !touchActive) return;
-
-  const t = e.changedTouches[0];
-  const pos = getBoardTouchPosition(t);
-
-  while (activeTile.col < pos.col && canMoveTo(activeTile.row, activeTile.col + 1)) {
-    activeTile.col++;
-  }
-  while (activeTile.col > pos.col && canMoveTo(activeTile.row, activeTile.col - 1)) {
-    activeTile.col--;
-  }
-
-  while (activeTile.row < pos.row && canMoveTo(activeTile.row + 1, activeTile.col)) {
-    activeTile.row++;
-  }
-
-  render();
-}, { passive: true });
-
-boardEl.addEventListener("touchend", () => {
-  touchActive = false;
-}, { passive: true });
+  }, { passive: true });
+}
 
 // -------------------------
 // INIT
 // -------------------------
+setupHomeScreen();
 initBoardUI();
 render();
 showMessage("Press Start");
+
+if (gameContainerEl) {
+  gameContainerEl.style.display = "none";
+}
 
 if (startBtn) {
   startBtn.disabled = false;

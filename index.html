@@ -7,37 +7,123 @@
   <link rel="stylesheet" href="style.css?v=3" />
 </head>
 <body>
-  <div class="game-container">
-    <h1>LETTERS DROP</h1>
+  <div id="homeScreen" class="home-container">
+    <img src="homepage.jpg" alt="Letters Drop Home Screen" class="home-image" />
 
-    <div class="top-bar">
-      <div class="stat-box">
-        <span class="label">Score</span>
-        <span id="score">0</span>
+    <a href="index.html" class="hotspot home-link" aria-label="Home"></a>
+    <a href="leaderboard.html" class="hotspot leaderboard-link" aria-label="Leaderboard"></a>
+    <a href="privacy.html" class="hotspot privacy-link" aria-label="Privacy"></a>
+    <a href="terms.html" class="hotspot terms-link" aria-label="Terms"></a>
+    <a href="about.html" class="hotspot about-link" aria-label="About"></a>
+    <a href="settings.html" class="hotspot settings-link" aria-label="Settings"></a>
+    <a href="profile.html" class="hotspot profile-link" aria-label="Profile"></a>
+    <a href="contact.html" class="hotspot contact-link" aria-label="Contact"></a>
+
+    <button id="playNowBtn" class="play-now-btn">Play Now</button>
+  </div>
+
+  <div id="gameContainer" style="display: none;">
+    <div class="game-container">
+      <h1>LETTERS DROP</h1>
+
+      <div class="top-bar">
+        <div class="stat-box">
+          <span class="label">Score</span>
+          <span id="score">0</span>
+        </div>
+
+        <div class="stat-box">
+          <span class="label">Level</span>
+          <span id="level">1</span>
+        </div>
+
+        <div class="stat-box next-letter-btn" onclick="dropNextLetter()">
+          <div class="label">NEXT</div>
+          <div class="value" id="nextLetterDisplay">A</div>
+        </div>
       </div>
 
-      <div class="stat-box">
-        <span class="label">Level</span>
-        <span id="level">1</span>
+      <div id="message" class="message">Press Start</div>
+
+      <div id="board" class="board"></div>
+
+      <div class="controls-row">
+        <button id="startBtn" class="main-btn" onclick="startNewGame()">Start Game</button>
       </div>
-
-     <div class="stat-box next-letter-btn" onclick="dropNextLetter()">
-  <div class="label">NEXT</div>
-  <div class="value" id="nextLetterDisplay">A</div>
-</div>
-    </div>
-
-    <div id="message" class="message">Press Start</div>
-
-    <div id="board" class="board"></div>
-
-    <div class="controls-row">
-     <button id="startBtn" class="main-btn" onclick="startNewGame()">Start Game</button>
     </div>
   </div>
 
-  <script src="dictionary.js?v=3"></script>
-<script src="game.js?v=3"></script>
+  <section class="info-section">
+    <h2>About Letters Drop</h2>
 
+    <p>
+      Letters Drop is a word game where letters fall from the top of the screen and you have to arrange them in rows in the bottom to make words.
+    </p>
+
+    <p>
+      Words of three letters will score one point, four-letter words will score 2 points, five-letter words will score 3 points, 6-letter words will score 4 points and 7-letter words will score 7 points and also clear the screen of all tiles.
+    </p>
+
+    <p>
+      Blank tiles will be displayed in the ‘next word’ column as ?. When it lands you will be given the opportunity to choose what letter it becomes. Choose wisely!
+    </p>
+
+    <p>
+      Words found will vanish from the grid and any letters that fall to make new words will score a x2 cascade multiplier. If another word is found you will score a x3 multiplier.
+    </p>
+
+    <p>
+      The game will speed up every minute, and will end when no letters can fall from the top of the grid.
+    </p>
+
+    <p>
+      Only words across from left to right are allowed.
+    </p>
+
+    <p>
+      All words must be in the English dictionary.
+    </p>
+
+    <p>
+      No names, brands and place names.
+    </p>
+
+    <p>
+      Letters Drop is designed as a brain training skill game to test speed, vocabulary and logical thinking.
+    </p>
+  </section>
+
+  <section class="info-section">
+    <h2>More Games from RobTechUK</h2>
+
+    <p>For more word games by RobTechUK, try the following:</p>
+
+    <div class="game-card">
+      <h3>Word Shuffle</h3>
+      <p>Slide the tiles and discover words in this original brain training game. Add chains and combos for bonus points.</p>
+      <p><a href="https://wordshuffle.co.uk" target="_blank">Play Word Shuffle</a></p>
+    </div>
+
+    <div class="game-card">
+      <h3>Word Steps</h3>
+      <p>Change one letter at a time to form new words before the timer runs out. As the words get longer, the points increase.</p>
+      <p><a href="https://wordsteps.co.uk" target="_blank">Play Word Steps</a></p>
+    </div>
+
+    <div class="game-card">
+      <h3>Word Scramble</h3>
+      <p>Solve the anagrams before the timer runs out. The anagrams reach 10 letters, with longer timers and higher points.</p>
+      <p><a href="https://wordscramble.co.uk" target="_blank">Play Word Scramble</a></p>
+    </div>
+
+    <div class="game-card">
+      <h3>Letters In</h3>
+      <p>Find as many words as you can from 9 letters before the timer runs out. A new puzzle is available every day.</p>
+      <p><a href="https://lettersin.co.uk" target="_blank">Play Letters In</a></p>
+    </div>
+  </section>
+
+  <script src="dictionary.js?v=3"></script>
+  <script src="game.js?v=3"></script>
 </body>
 </html>
