@@ -42,11 +42,11 @@ const startBtn = document.getElementById("startBtn");
 function setupHomeScreen() {
   if (!playNowBtnEl || !homeScreenEl || !gameContainerEl) return;
 
-  playNowBtnEl.addEventListener("click", () => {
-    homeScreenEl.style.display = "none";
-    gameContainerEl.style.display = "block";
-  });
-}
+playNowBtnEl.addEventListener("click", () => {
+  homeScreenEl.style.display = "none";
+  gameContainerEl.style.display = "block";
+  document.body.classList.add("game-active");
+});
 
 // -------------------------
 // DICTIONARY

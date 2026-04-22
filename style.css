@@ -449,6 +449,11 @@ body {
   padding: 8px 10px 20px;
 }
 
+body.game-active {
+  overflow: hidden;
+  height: 100svh;
+}
+
 @media (max-width: 520px) {
   .play-now-btn {
     top: 78%;
@@ -463,4 +468,14 @@ body {
   .info-section h2 {
     font-size: 1.3rem;
   }
+}
+/* Stop the page moving while playing */
+html, body {
+  overscroll-behavior: none;
+}
+
+#gameContainer,
+.game-container,
+.board {
+  touch-action: none;
 }
