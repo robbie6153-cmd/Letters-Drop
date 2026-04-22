@@ -9,7 +9,7 @@ const MIN_FALL_MS = 150;
 const LETTERS =
   "EEEEEEEEEEEEAAAAAAAARRRRRRRRIIIIIIIIOOOOOOONNNNNNTTTTTTLLLLSSSSUUUUDDDDGGGBBCCMMPPFFHHVVWWYYKJXQZ";
 
-const BLANK_TILE_CHANCE = 1 / 6;
+const BLANK_TILE_CHANCE = 1 / 12;
 
 let board = [];
 let activeTile = null;
@@ -467,13 +467,15 @@ async function resolveBoard() {
       showComboPopup("7 LETTER WORD!", true);
     }
 
-    showMessage(
-      hasSevenLetterWord
-        ? `Words: ${words.map(w => w.word).join(", ")} | GRID CLEAR! | +${gained}`
-        : multiplier > 1
-          ? `Words: ${words.map(w => w.word).join(", ")} | Combo x${multiplier} | +${gained}`
-          : `Words: ${words.map(w => w.word).join(", ")} | +${gained}`
-    );
+   const longestWordText = longestWord ? longestWord.word : "";
+
+showMessage(
+  hasSevenLetterWord
+    ? `Word: ${longestWordText} | GRID CLEAR! | +${gained}`
+    : multiplier > 1
+      ? `Word: ${longestWordText} | Combo x${multiplier} | +${gained}`
+      : `Word: ${longestWordText} | +${gained}`
+);
 
     flashCells(words, multiplier);
     await pause(220);
