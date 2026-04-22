@@ -36,17 +36,23 @@ const levelEl = document.getElementById("level");
 const messageEl = document.getElementById("message");
 const startBtn = document.getElementById("startBtn");
 
+function showGameScreen() {
+  if (homeScreenEl) {
+    homeScreenEl.style.display = "none";
+  }
+
+  if (gameContainerEl) {
+    gameContainerEl.style.display = "block";
+  }
+
+  document.body.classList.add("game-active");
+}
 // -------------------------
 // HOME SCREEN
 // -------------------------
 function setupHomeScreen() {
-  if (!playNowBtnEl || !homeScreenEl || !gameContainerEl) return;
-
-playNowBtnEl.addEventListener("click", () => {
-  homeScreenEl.style.display = "none";
-  gameContainerEl.style.display = "block";
-  document.body.classList.add("game-active");
-});
+  // Play Now is handled directly by onclick in index.html
+}
 
 // -------------------------
 // DICTIONARY
