@@ -351,20 +351,25 @@ h1 {
   z-index: 5;
 }
 
-.home-link { top: 0.5%; left: 0.5%; width: 11%; height: 7%; }
-.leaderboard-link { top: 0.5%; left: 12%; width: 16%; height: 7%; }
-.privacy-link { top: 0.5%; left: 28.5%; width: 21%; height: 7%; }
-.terms-link { top: 0.5%; left: 49.5%; width: 19%; height: 7%; }
-.about-link { top: 0.5%; left: 69%; width: 11%; height: 7%; }
-.settings-link { top: 0.5%; left: 80%; width: 11%; height: 7%; }
-.profile-link { top: 0.5%; left: 91%; width: 8%; height: 7%; }
+.home-link { top: 1%; left: 1%; width: 10%; height: 5.5%; }
 
+.leaderboard-link { top: 1%; left: 11%; width: 15%; height: 5.5%; }
+
+.privacy-link { top: 1%; left: 26%; width: 20%; height: 5.5%; }
+
+.terms-link { top: 1%; left: 46%; width: 19%; height: 5.5%; }
+
+.about-link { top: 1%; left: 65%; width: 11%; height: 5.5%; }
+
+.settings-link { top: 1%; left: 76%; width: 11%; height: 5.5%; }
+
+.profile-link { top: 1%; left: 87%; width: 12%; height: 5.5%; }
 /* You may need to tweak this one to match your image */
 .contact-link {
-  top: 89%;
+  top: 93%;
   left: 73%;
-  width: 24%;
-  height: 8%;
+  width: 26%;
+  height: 7%;
 }
 
 .play-now-btn {
